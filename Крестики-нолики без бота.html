@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Крестики-нолики</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e6e6e6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: rgba(25, 25, 35, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            padding: 30px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #0f3460;
+        }
+
+        h1 {
+            color: #4cc9f0;
+            font-size: 2.8rem;
+            text-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: #a9b7c6;
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        @media (min-width: 768px) {
+            .game-area {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 12px;
+            background-color: #0f3460;
+            padding: 12px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #1a1a2e;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        @media (max-width: 480px) {
+            .cell {
+                width: 80px;
+                height: 80px;
+                font-size: 2.8rem;
+            }
+        }
+
+        .cell:hover {
+            background-color: #252547;
+            transform: scale(1.03);
+        }
+
+        .cell.x {
+            color: #f72585;
+            text-shadow: 0 0 15px rgba(247, 37, 133, 0.7);
+        }
+
+        .cell.o {
+            color: #4cc9f0;
+            text-shadow: 0 0 15px rgba(76, 201, 240, 0.7);
+        }
+
+        .cell.win {
+            animation: pulse 1.5s infinite;
+            background-color: #2a2a5a;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .game-info {
+            background-color: #0f3460;
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .status {
+            background-color: #1a1a2e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4cc9f0;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .current-player {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .player-indicator {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+
+        .player-x {
+            background-color: #f72585;
+            color: white;
+        }
+
+        .player-o {
+            background-color: #4cc9f0;
+            color: white;
+        }
+
+        .stats {
+            background-color: #1a1a2e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stats h3 {
+            color: #a9b7c6;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-new-game {
+            background: linear-gradient(to right, #f72585, #b5179e);
+            color: white;
+        }
+
+        .btn-new-game:hover {
+            background: linear-gradient(to right, #e11575, #a5078e);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.4);
+        }
+
+        .btn-reset-stats {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-reset-stats:hover {
+            background-color: #3a56d4;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        footer {
+            margin-top: 25px;
+            text-align: center;
+            color: #a9b7c6;
+            font-size: 0.9rem;
+            padding-top: 15px;
+            border-top: 1px solid #0f3460;
+        }
+
+        .instructions {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #8a9ba8;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Крестики-нолики</h1>
+            <div class="subtitle">Классическая игра для двух игроков</div>
+        </header>
+
+        <div class="game-area">
+            <div class="game-board" id="gameBoard">
+                <!-- Игровое поле будет создано с помощью JavaScript -->
+            </div>
+
+            <div class="game-info">
+                <div class="status" id="status">Ход игрока: <span class="player-indicator player-x">X</span></div>
+                
+                <div class="current-player">
+                    <span>Сейчас ходит:</span>
+                    <div class="player-indicator player-x" id="currentPlayerIndicator">X</div>
+                </div>
+                
+                <div class="stats">
+                    <h3>Статистика игры</h3>
+                    <div class="stat-item">
+                        <span>Побед X:</span>
+                        <span id="winsX">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Побед O:</span>
+                        <span id="winsO">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Ничьих:</span>
+                        <span id="draws">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Всего игр:</span>
+                        <span id="totalGames">0</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn-new-game" id="newGameBtn">Новая игра</button>
+                    <button class="btn-reset-stats" id="resetStatsBtn">Сбросить статистику</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Игра "Крестики-нолики" © 2023</p>
+            <div class="instructions">
+                Правила: Игроки по очереди ставят X и O на свободные клетки. Первый, кто выстроит 3 своих символа в ряд (по горизонтали, вертикали или диагонали), побеждает.
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Элементы DOM
+            const gameBoard = document.getElementById('gameBoard');
+            const status = document.getElementById('status');
+            const currentPlayerIndicator = document.getElementById('currentPlayerIndicator');
+            const winsXElement = document.getElementById('winsX');
+            const winsOElement = document.getElementById('winsO');
+            const drawsElement = document.getElementById('draws');
+            const totalGamesElement = document.getElementById('totalGames');
+            const newGameBtn = document.getElementById('newGameBtn');
+            const resetStatsBtn = document.getElementById('resetStatsBtn');
+
+            // Состояние игры
+            let gameState = ['', '', '', '', '', '', '', '', ''];
+            let currentPlayer = 'X';
+            let gameActive = true;
+            let winner = null;
+            let winningCells = [];
+
+            // Статистика
+            let stats = {
+                winsX: 0,
+                winsO: 0,
+                draws: 0,
+                totalGames: 0
+            };
+
+            // Паттерны для победы (индексы ячеек)
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Горизонтальные
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Вертикальные
+                [0, 4, 8], [2, 4, 6]             // Диагональные
+            ];
+
+            // Загрузка статистики из localStorage
+            function loadStats() {
+                const savedStats = localStorage.getItem('ticTacToeStats');
+                if (savedStats) {
+                    stats = JSON.parse(savedStats);
+                }
+                updateStatsDisplay();
+            }
+
+            // Сохранение статистики в localStorage
+            function saveStats() {
+                localStorage.setItem('ticTacToeStats', JSON.stringify(stats));
+            }
+
+            // Обновление отображения статистики
+            function updateStatsDisplay() {
+                winsXElement.textContent = stats.winsX;
+                winsOElement.textContent = stats.winsO;
+                drawsElement.textContent = stats.draws;
+                totalGamesElement.textContent = stats.totalGames;
+            }
+
+            // Инициализация игрового поля
+            function initializeBoard() {
+                gameBoard.innerHTML = '';
+                
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.setAttribute('data-index', i);
+                    cell.addEventListener('click', () => handleCellClick(i));
+                    gameBoard.appendChild(cell);
+                }
+            }
+
+            // Обработка клика по ячейке
+            function handleCellClick(index) {
+                // Если игра неактивна или ячейка уже занята, игнорируем клик
+                if (!gameActive || gameState[index] !== '') return;
+
+                // Обновляем состояние игры
+                gameState[index] = currentPlayer;
+                
+                // Обновляем отображение
+                const cell = document.querySelector(`.cell[data-index="${index}"]`);
+                cell.textContent = currentPlayer;
+                cell.classList.add(currentPlayer.toLowerCase());
+                
+                // Проверяем на победу или ничью
+                checkGameResult();
+                
+                // Если игра продолжается, меняем игрока
+                if (gameActive) {
+                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                    updateGameStatus();
+                }
+            }
+
+            // Проверка результата игры
+            function checkGameResult() {
+                let roundWon = false;
+
+                // Проверяем все возможные выигрышные комбинации
+                for (let pattern of winPatterns) {
+                    const [a, b, c] = pattern;
+                    
+                    if (
+                        gameState[a] !== '' &&
+                        gameState[a] === gameState[b] &&
+                        gameState[a] === gameState[c]
+                    ) {
+                        roundWon = true;
+                        winner = gameState[a];
+                        winningCells = pattern;
+                        break;
+                    }
+                }
+
+                // Если есть победитель
+                if (roundWon) {
+                    gameActive = false;
+                    
+                    // Обновляем статистику
+                    if (winner === 'X') {
+                        stats.winsX++;
+                        stats.totalGames++;
+                    } else {
+                        stats.winsO++;
+                        stats.totalGames++;
+                    }
+                    
+                    // Подсвечиваем выигрышную линию
+                    highlightWinningCells();
+                    
+                    // Обновляем статус
+                    status.innerHTML = `Победил игрок: <span class="player-indicator ${winner === 'X' ? 'player-x' : 'player-o'}">${winner}</span>`;
+                    
+                    // Сохраняем статистику
+                    saveStats();
+                    updateStatsDisplay();
+                    return;
+                }
+
+                // Проверяем на ничью
+                if (!gameState.includes('')) {
+                    gameActive = false;
+                    winner = 'draw';
+                    
+                    // Обновляем статистику
+                    stats.draws++;
+                    stats.totalGames++;
+                    
+                    // Обновляем статус
+                    status.textContent = 'Ничья!';
+                    
+                    // Сохраняем статистику
+                    saveStats();
+                    updateStatsDisplay();
+                }
+            }
+
+            // Подсветка выигрышной линии
+            function highlightWinningCells() {
+                winningCells.forEach(index => {
+                    const cell = document.querySelector(`.cell[data-index="${index}"]`);
+                    cell.classList.add('win');
+                });
+            }
+
+            // Обновление статуса игры
+            function updateGameStatus() {
+                if (gameActive) {
+                    status.innerHTML = `Ход игрока: <span class="player-indicator ${currentPlayer === 'X' ? 'player-x' : 'player-o'}">${currentPlayer}</span>`;
+                    currentPlayerIndicator.textContent = currentPlayer;
+                    currentPlayerIndicator.className = `player-indicator ${currentPlayer === 'X' ? 'player-x' : 'player-o'}`;
+                }
+            }
+
+            // Начало новой игры
+            function startNewGame() {
+                gameState = ['', '', '', '', '', '', '', '', ''];
+                currentPlayer = 'X';
+                gameActive = true;
+                winner = null;
+                winningCells = [];
+                
+                // Сбрасываем отображение ячеек
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.className = 'cell';
+                });
+                
+                // Обновляем статус
+                updateGameStatus();
+            }
+
+            // Сброс статистики
+            function resetStats() {
+                stats = {
+                    winsX: 0,
+                    winsO: 0,
+                    draws: 0,
+                    totalGames: 0
+                };
+                
+                saveStats();
+                updateStatsDisplay();
+            }
+
+            // Инициализация игры
+            function initGame() {
+                loadStats();
+                initializeBoard();
+                updateGameStatus();
+                
+                // Назначаем обработчики событий для кнопок
+                newGameBtn.addEventListener('click', startNewGame);
+                resetStatsBtn.addEventListener('click', resetStats);
+            }
+
+            // Запускаем игру
+            initGame();
+        });
+    </script>
+</body>
+</html>

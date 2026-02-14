@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Крестики-нолики с ботом</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e6e6e6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background-color: rgba(25, 25, 35, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            padding: 30px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #0f3460;
+        }
+
+        h1 {
+            color: #4cc9f0;
+            font-size: 2.8rem;
+            text-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: #a9b7c6;
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        @media (min-width: 768px) {
+            .game-area {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 12px;
+            background-color: #0f3460;
+            padding: 12px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #1a1a2e;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        @media (max-width: 480px) {
+            .cell {
+                width: 80px;
+                height: 80px;
+                font-size: 2.8rem;
+            }
+        }
+
+        .cell:hover {
+            background-color: #252547;
+            transform: scale(1.03);
+        }
+
+        .cell.x {
+            color: #f72585;
+            text-shadow: 0 0 15px rgba(247, 37, 133, 0.7);
+        }
+
+        .cell.o {
+            color: #4cc9f0;
+            text-shadow: 0 0 15px rgba(76, 201, 240, 0.7);
+        }
+
+        .cell.win {
+            animation: pulse 1.5s infinite;
+            background-color: #2a2a5a;
+        }
+
+        .cell.disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .cell.disabled:hover {
+            background-color: #1a1a2e;
+            transform: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .game-info {
+            background-color: #0f3460;
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .status {
+            background-color: #1a1a2e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4cc9f0;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .current-player {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .player-indicator {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+
+        .player-x {
+            background-color: #f72585;
+            color: white;
+        }
+
+        .player-o {
+            background-color: #4cc9f0;
+            color: white;
+        }
+
+        .game-settings {
+            background-color: #1a1a2e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .game-settings h3 {
+            color: #a9b7c6;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+        }
+
+        .setting-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #8a9ba8;
+        }
+
+        .difficulty-selector, .symbol-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .difficulty-btn, .symbol-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            background-color: #0f3460;
+            color: #a9b7c6;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .difficulty-btn:hover, .symbol-btn:hover {
+            background-color: #1a4a8a;
+        }
+
+        .difficulty-btn.active, .symbol-btn.active {
+            background-color: #4361ee;
+            color: white;
+            box-shadow: 0 0 10px rgba(67, 97, 238, 0.5);
+        }
+
+        .stats {
+            background-color: #1a1a2e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stats h3 {
+            color: #a9b7c6;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-new-game {
+            background: linear-gradient(to right, #f72585, #b5179e);
+            color: white;
+        }
+
+        .btn-new-game:hover {
+            background: linear-gradient(to right, #e11575, #a5078e);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.4);
+        }
+
+        .btn-reset-stats {
+            background-color: #4361ee;
+            color: white;
+        }
+
+        .btn-reset-stats:hover {
+            background-color: #3a56d4;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        footer {
+            margin-top: 25px;
+            text-align: center;
+            color: #a9b7c6;
+            font-size: 0.9rem;
+            padding-top: 15px;
+            border-top: 1px solid #0f3460;
+        }
+
+        .instructions {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #8a9ba8;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .thinking {
+            color: #ffb347;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Крестики-нолики</h1>
+            <div class="subtitle">Сражение с искусственным интеллектом</div>
+        </header>
+
+        <div class="game-area">
+            <div class="game-board" id="gameBoard">
+                <!-- Игровое поле будет создано с помощью JavaScript -->
+            </div>
+
+            <div class="game-info">
+                <div class="status" id="status">Ваш ход: <span class="player-indicator player-x">X</span></div>
+                
+                <div class="current-player">
+                    <span>Сейчас ходит:</span>
+                    <div class="player-indicator player-x" id="currentPlayerIndicator">X</div>
+                </div>
+                
+                <div class="game-settings">
+                    <h3>Настройки игры</h3>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">Уровень сложности:</div>
+                        <div class="difficulty-selector">
+                            <button class="difficulty-btn active" data-level="easy">Легкий</button>
+                            <button class="difficulty-btn" data-level="medium">Средний</button>
+                            <button class="difficulty-btn" data-level="hard">Сложный</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-label">Вы играете за:</div>
+                        <div class="symbol-selector">
+                            <button class="symbol-btn active" data-symbol="X">Крестики (X)</button>
+                            <button class="symbol-btn" data-symbol="O">Нолики (O)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <h3>Статистика</h3>
+                    <div class="stat-item">
+                        <span>Ваши победы:</span>
+                        <span id="winsPlayer">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Победы бота:</span>
+                        <span id="winsBot">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Ничьих:</span>
+                        <span id="draws">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Всего игр:</span>
+                        <span id="totalGames">0</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn-new-game" id="newGameBtn">Новая игра</button>
+                    <button class="btn-reset-stats" id="resetStatsBtn">Сбросить статистику</button>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Игра "Крестики-нолики с ботом" © 2023</p>
+            <div class="instructions">
+                Легкий уровень: бот делает случайные ходы. Средний: бот блокирует ваши линии. 
+                Сложный: бот использует минимакс-алгоритм и практически непобедим.
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Элементы DOM
+            const gameBoard = document.getElementById('gameBoard');
+            const status = document.getElementById('status');
+            const currentPlayerIndicator = document.getElementById('currentPlayerIndicator');
+            const winsPlayerElement = document.getElementById('winsPlayer');
+            const winsBotElement = document.getElementById('winsBot');
+            const drawsElement = document.getElementById('draws');
+            const totalGamesElement = document.getElementById('totalGames');
+            const newGameBtn = document.getElementById('newGameBtn');
+            const resetStatsBtn = document.getElementById('resetStatsBtn');
+            const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+            const symbolButtons = document.querySelectorAll('.symbol-btn');
+
+            // Состояние игры
+            let gameState = ['', '', '', '', '', '', '', '', ''];
+            let currentPlayer = 'X';
+            let gameActive = true;
+            let winner = null;
+            let winningCells = [];
+            let isBotThinking = false;
+
+            // Настройки игры
+            let settings = {
+                difficulty: 'medium', // easy, medium, hard
+                playerSymbol: 'X',    // X или O
+                botSymbol: 'O'
+            };
+
+            // Статистика
+            let stats = {
+                winsPlayer: 0,
+                winsBot: 0,
+                draws: 0,
+                totalGames: 0
+            };
+
+            // Паттерны для победы (индексы ячеек)
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Горизонтальные
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Вертикальные
+                [0, 4, 8], [2, 4, 6]             // Диагональные
+            ];
+
+            // Загрузка статистики из localStorage
+            function loadStats() {
+                const savedStats = localStorage.getItem('ticTacToeBotStats');
+                if (savedStats) {
+                    stats = JSON.parse(savedStats);
+                }
+                updateStatsDisplay();
+            }
+
+            // Сохранение статистики в localStorage
+            function saveStats() {
+                localStorage.setItem('ticTacToeBotStats', JSON.stringify(stats));
+            }
+
+            // Обновление отображения статистики
+            function updateStatsDisplay() {
+                winsPlayerElement.textContent = stats.winsPlayer;
+                winsBotElement.textContent = stats.winsBot;
+                drawsElement.textContent = stats.draws;
+                totalGamesElement.textContent = stats.totalGames;
+            }
+
+            // Инициализация игрового поля
+            function initializeBoard() {
+                gameBoard.innerHTML = '';
+                
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.setAttribute('data-index', i);
+                    cell.addEventListener('click', () => handleCellClick(i));
+                    gameBoard.appendChild(cell);
+                }
+            }
+
+            // Обработка клика по ячейке
+            function handleCellClick(index) {
+                // Если игра неактивна, ячейка уже занята или бот "думает", игнорируем клик
+                if (!gameActive || gameState[index] !== '' || isBotThinking) return;
+                
+                // Если сейчас ход бота, игнорируем клик
+                if (currentPlayer === settings.botSymbol) return;
+
+                makeMove(index, settings.playerSymbol);
+            }
+
+            // Сделать ход
+            function makeMove(index, symbol) {
+                // Обновляем состояние игры
+                gameState[index] = symbol;
+                
+                // Обновляем отображение
+                const cell = document.querySelector(`.cell[data-index="${index}"]`);
+                cell.textContent = symbol;
+                cell.classList.add(symbol.toLowerCase());
+                
+                // Проверяем на победу или ничью
+                checkGameResult();
+                
+                // Если игра продолжается, меняем игрока
+                if (gameActive) {
+                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                    updateGameStatus();
+                    
+                    // Если сейчас ход бота, запускаем его ход
+                    if (currentPlayer === settings.botSymbol && gameActive) {
+                        setTimeout(makeBotMove, 500); // Задержка для видимости "размышления"
+                    }
+                }
+            }
+
+            // Ход бота
+            function makeBotMove() {
+                if (!gameActive || currentPlayer !== settings.botSymbol) return;
+                
+                isBotThinking = true;
+                status.innerHTML = '<span class="thinking">Бот думает...</span>';
+                
+                // Искусственная задержка для реалистичности
+                setTimeout(() => {
+                    let botMoveIndex;
+                    
+                    // Выбор стратегии в зависимости от уровня сложности
+                    switch(settings.difficulty) {
+                        case 'easy':
+                            botMoveIndex = getRandomMove();
+                            break;
+                        case 'medium':
+                            botMoveIndex = getMediumMove();
+                            break;
+                        case 'hard':
+                            botMoveIndex = getHardMove();
+                            break;
+                        default:
+                            botMoveIndex = getRandomMove();
+                    }
+                    
+                    if (botMoveIndex !== -1) {
+                        makeMove(botMoveIndex, settings.botSymbol);
+                    }
+                    
+                    isBotThinking = false;
+                }, 600);
+            }
+
+            // Случайный ход (легкий уровень)
+            function getRandomMove() {
+                const availableMoves = gameState
+                    .map((cell, index) => cell === '' ? index : null)
+                    .filter(index => index !== null);
+                
+                if (availableMoves.length === 0) return -1;
+                
+                return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            }
+
+            // Ход средней сложности
+            function getMediumMove() {
+                // 1. Попытаться выиграть
+                for (let pattern of winPatterns) {
+                    const [a, b, c] = pattern;
+                    const cells = [gameState[a], gameState[b], gameState[c]];
+                    
+                    // Если две клетки заняты ботом, а третья свободна
+                    if (cells.filter(cell => cell === settings.botSymbol).length === 2) {
+                        if (gameState[a] === '' && cells[0] === '') return a;
+                        if (gameState[b] === '' && cells[1] === '') return b;
+                        if (gameState[c] === '' && cells[2] === '') return c;
+                    }
+                }
+                
+                // 2. Попытаться заблокировать игрока
+                for (let pattern of winPatterns) {
+                    const [a, b, c] = pattern;
+                    const cells = [gameState[a], gameState[b], gameState[c]];
+                    
+                    // Если две клетки заняты игроком, а третья свободна
+                    if (cells.filter(cell => cell === settings.playerSymbol).length === 2) {
+                        if (gameState[a] === '' && cells[0] === '') return a;
+                        if (gameState[b] === '' && cells[1] === '') return b;
+                        if (gameState[c] === '' && cells[2] === '') return c;
+                    }
+                }
+                
+                // 3. Занять центр, если свободен
+                if (gameState[4] === '') return 4;
+                
+                // 4. Случайный ход
+                return getRandomMove();
+            }
+
+            // Ход высокой сложности (минимакс-алгоритм)
+            function getHardMove() {
+                // Используем минимакс-алгоритм для поиска лучшего хода
+                return minimax(gameState, settings.botSymbol).index;
+            }
+
+            // Минимакс-алгоритм
+            function minimax(newBoard, player) {
+                // Доступные ходы
+                const availableSpots = newBoard
+                    .map((cell, index) => cell === '' ? index : null)
+                    .filter(index => index !== null);
+                
+                // Проверка на терминальное состояние (победа, поражение, ничья)
+                if (checkWinner(newBoard, settings.playerSymbol)) {
+                    return { score: -10 };
+                } else if (checkWinner(newBoard, settings.botSymbol)) {
+                    return { score: 10 };
+                } else if (availableSpots.length === 0) {
+                    return { score: 0 };
+                }
+                
+                // Массив для хранения всех возможных ходов
+                const moves = [];
+                
+                // Перебираем все доступные ходы
+                for (let i = 0; i < availableSpots.length; i++) {
+                    const move = {};
+                    move.index = availableSpots[i];
+                    
+                    // Делаем ход
+                    newBoard[availableSpots[i]] = player;
+                    
+                    // Рекурсивно вызываем минимакс для следующего хода
+                    if (player === settings.botSymbol) {
+                        const result = minimax(newBoard, settings.playerSymbol);
+                        move.score = result.score;
+                    } else {
+                        const result = minimax(newBoard, settings.botSymbol);
+                        move.score = result.score;
+                    }
+                    
+                    // Отменяем ход
+                    newBoard[availableSpots[i]] = '';
+                    
+                    // Добавляем ход в массив
+                    moves.push(move);
+                }
+                
+                // Выбираем лучший ход
+                let bestMove;
+                if (player === settings.botSymbol) {
+                    let bestScore = -Infinity;
+                    for (let i = 0; i < moves.length; i++) {
+                        if (moves[i].score > bestScore) {
+                            bestScore = moves[i].score;
+                            bestMove = i;
+                        }
+                    }
+                } else {
+                    let bestScore = Infinity;
+                    for (let i = 0; i < moves.length; i++) {
+                        if (moves[i].score < bestScore) {
+                            bestScore = moves[i].score;
+                            bestMove = i;
+                        }
+                    }
+                }
+                
+                // Возвращаем лучший ход
+                return moves[bestMove];
+            }
+
+            // Проверка победителя для минимакса
+            function checkWinner(board, player) {
+                for (let pattern of winPatterns) {
+                    const [a, b, c] = pattern;
+                    if (board[a] === player && board[b] === player && board[c] === player) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Проверка результата игры
+            function checkGameResult() {
+                let roundWon = false;
+
+                // Проверяем все возможные выигрышные комбинации
+                for (let pattern of winPatterns) {
+                    const [a, b, c] = pattern;
+                    
+                    if (
+                        gameState[a] !== '' &&
+                        gameState[a] === gameState[b] &&
+                        gameState[a] === gameState[c]
+                    ) {
+                        roundWon = true;
+                        winner = gameState[a];
+                        winningCells = pattern;
+                        break;
+                    }
+                }
+
+                // Если есть победитель
+                if (roundWon) {
+                    gameActive = false;
+                    
+                    // Обновляем статистику
+                    if (winner === settings.playerSymbol) {
+                        stats.winsPlayer++;
+                        stats.totalGames++;
+                        status.innerHTML = `Вы победили! <span class="player-indicator ${winner === 'X' ? 'player-x' : 'player-o'}">${winner}</span>`;
+                    } else {
+                        stats.winsBot++;
+                        stats.totalGames++;
+                        status.innerHTML = `Победил бот: <span class="player-indicator ${winner === 'X' ? 'player-x' : 'player-o'}">${winner}</span>`;
+                    }
+                    
+                    // Подсвечиваем выигрышную линию
+                    highlightWinningCells();
+                    
+                    // Сохраняем статистику
+                    saveStats();
+                    updateStatsDisplay();
+                    return;
+                }
+
+                // Проверяем на ничью
+                if (!gameState.includes('')) {
+                    gameActive = false;
+                    winner = 'draw';
+                    
+                    // Обновляем статистику
+                    stats.draws++;
+                    stats.totalGames++;
+                    
+                    // Обновляем статус
+                    status.textContent = 'Ничья!';
+                    
+                    // Сохраняем статистику
+                    saveStats();
+                    updateStatsDisplay();
+                }
+            }
+
+            // Подсветка выигрышной линии
+            function highlightWinningCells() {
+                winningCells.forEach(index => {
+                    const cell = document.querySelector(`.cell[data-index="${index}"]`);
+                    cell.classList.add('win');
+                });
+            }
+
+            // Обновление статуса игры
+            function updateGameStatus() {
+                if (gameActive) {
+                    if (currentPlayer === settings.playerSymbol) {
+                        status.innerHTML = `Ваш ход: <span class="player-indicator ${currentPlayer === 'X' ? 'player-x' : 'player-o'}">${currentPlayer}</span>`;
+                    } else {
+                        status.innerHTML = `Ход бота: <span class="player-indicator ${currentPlayer === 'X' ? 'player-x' : 'player-o'}">${currentPlayer}</span>`;
+                    }
+                    
+                    currentPlayerIndicator.textContent = currentPlayer;
+                    currentPlayerIndicator.className = `player-indicator ${currentPlayer === 'X' ? 'player-x' : 'player-o'}`;
+                }
+            }
+
+            // Начало новой игры
+            function startNewGame() {
+                gameState = ['', '', '', '', '', '', '', '', ''];
+                currentPlayer = 'X'; // Всегда начинают крестики
+                gameActive = true;
+                winner = null;
+                winningCells = [];
+                isBotThinking = false;
+                
+                // Сбрасываем отображение ячеек
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.className = 'cell';
+                });
+                
+                // Обновляем статус
+                updateGameStatus();
+                
+                // Если бот начинает первым
+                if (settings.botSymbol === 'X') {
+                    setTimeout(makeBotMove, 500);
+                }
+            }
+
+            // Изменение уровня сложности
+            function setDifficulty(level) {
+                settings.difficulty = level;
+                
+                // Обновляем активные кнопки
+                difficultyButtons.forEach(btn => {
+                    if (btn.dataset.level === level) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Начинаем новую игру при изменении сложности
+                startNewGame();
+            }
+
+            // Изменение символа игрока
+            function setPlayerSymbol(symbol) {
+                settings.playerSymbol = symbol;
+                settings.botSymbol = symbol === 'X' ? 'O' : 'X';
+                
+                // Обновляем активные кнопки
+                symbolButtons.forEach(btn => {
+                    if (btn.dataset.symbol === symbol) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                // Начинаем новую игру при изменении символа
+                startNewGame();
+            }
+
+            // Сброс статистики
+            function resetStats() {
+                stats = {
+                    winsPlayer: 0,
+                    winsBot: 0,
+                    draws: 0,
+                    totalGames: 0
+                };
+                
+                saveStats();
+                updateStatsDisplay();
+            }
+
+            // Инициализация игры
+            function initGame() {
+                loadStats();
+                initializeBoard();
+                updateGameStatus();
+                
+                // Назначаем обработчики событий для кнопок
+                newGameBtn.addEventListener('click', startNewGame);
+                resetStatsBtn.addEventListener('click', resetStats);
+                
+                // Обработчики для кнопок сложности
+                difficultyButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        setDifficulty(btn.dataset.level);
+                    });
+                });
+                
+                // Обработчики для кнопок выбора символа
+                symbolButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        setPlayerSymbol(btn.dataset.symbol);
+                    });
+                });
+            }
+
+            // Запускаем игру
+            initGame();
+        });
+    </script>
+</body>
+</html>
